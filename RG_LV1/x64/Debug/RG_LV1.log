@@ -1,0 +1,4 @@
+﻿  RG_LV1.cpp
+c:\users\rekca\desktop\za faks\1.dpsemestar\robotski vid\lv\lv2\rg_lv1\rg_lv1.cpp(181): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  RG_LV1.vcxproj -> C:\Users\Rekca\Desktop\za faks\1.DPsemestar\Robotski vid\LV\LV2\x64\Debug\RG_LV1.exe
+  RG_LV1.vcxproj -> C:\Users\Rekca\Desktop\za faks\1.DPsemestar\Robotski vid\LV\LV2\x64\Debug\RG_LV1.pdb (Full PDB)
