@@ -49,8 +49,9 @@ void onMouse(int event, int x, int y, int flags, void *userData) {
 		UserData* data = (UserData*)userData;
 		Subdiv2D subdiv = data->subdiv;
 		printf("location: x: %d  y: %d\n", x, y);
+
 		for (int i = 4; i < data->pointNum+4; i++) {
-			int* firstEdge = new int;
+			int edges[3];
 			int firstVertIndex = i;
 
 			Point2f* verts[3];
@@ -58,89 +59,81 @@ void onMouse(int event, int x, int y, int flags, void *userData) {
 			verts[1] = new Point2f();
 			verts[2] = new Point2f();
 
-			*verts[0] = subdiv.getVertex(firstVertIndex, firstEdge);
+			*verts[0] = subdiv.getVertex(firstVertIndex, &edges[0]);
+			int beginningEdge = edges[0];
+			int secondVertIndex, thirdVertIndex;
 
-			int secondEdge = subdiv.getEdge(*firstEdge, subdiv.NEXT_AROUND_LEFT);
-			int secondVertIndex = subdiv.edgeOrg(secondEdge, verts[1]);
-
-			int thirdEdge = subdiv.getEdge(secondEdge, subdiv.NEXT_AROUND_LEFT);	
-			int thirdVertIndex = subdiv.edgeOrg(thirdEdge, verts[2]);
-			if (firstVertIndex < 4 || secondVertIndex < 4 || thirdVertIndex < 4) {
-				continue;
-			}
-			if ((firstVertIndex > secondVertIndex) && (firstVertIndex > thirdVertIndex)) {
-				continue;
-			}
-
-			Point2f edgeVectors[3];
-			Point2f edgeNormal[3];
-			Point2f edgeMidpoint[3];
-
-			int k = 0;
-			for (int j = 0; j < 3; j++) {
-				k = j + 1;
-				if (j == 2) k = 0;
-				edgeVectors[j] = Point2f(Point2f(verts[k]->x - verts[j]->x, verts[k]->y - verts[j]->y));
-
-				float edgeModulus = sqrt((edgeVectors[j].x * edgeVectors[j].x) + (edgeVectors[j].y * edgeVectors[j].y));
-				edgeNormal[j] = Point2f((edgeVectors[j].y/edgeModulus), (-edgeVectors[j].x/edgeModulus));
-
-				edgeMidpoint[j] = Point2f((verts[j]->x + verts[k]->x) / 2, (verts[j]->y + verts[k]->y) / 2);
-			}			
-
-			//FIRST METHOD
-			int counter = 0;
-			for (int j = 0; j < 3; j++) {				
-				if (((edgeNormal[j].x * (x - edgeMidpoint[j].x)) + (edgeNormal[j].y * (y - edgeMidpoint[j].y))) <= 0) {
-					counter++;					
+			//CYCLE THROUGH ALL TRIANGLES WHICH CONNECT TO THE FIRST VERTEX
+			do {
+				edges[0] = subdiv.getEdge(edges[0], subdiv.NEXT_AROUND_ORG);
+				if (edges[0] == beginningEdge) {
+					break;
 				}
-				printf("%d ; %d :: %d -> %f\n", i, j, counter, ((edgeNormal[j].x * (x - edgeMidpoint[j].x)) + (edgeNormal[j].y * (y - edgeMidpoint[j].y))));
-			}
-			if (counter == 3) {
-				printf("\nPoint I : %.0f, %.0f  ;  Point II : %.0f, %.0f  ;  Point III : %.0f, %.0f\n", verts[0]->x, verts[0]->y, verts[1]->x, verts[1]->y, verts[2]->x, verts[2]->y);
-				Mat tempImage = data->image.clone();
-				const Point2i* points[3] = {
-					new Point2i((int)verts[0]->x, (int)verts[0]->y),
-					new Point2i((int)verts[1]->x, (int)verts[1]->y),
-					new Point2i((int)verts[2]->x, (int)verts[2]->y) };
+				edges[1] = subdiv.getEdge(edges[0], subdiv.NEXT_AROUND_LEFT);
+				secondVertIndex = subdiv.edgeOrg(edges[1], verts[1]);
 
-				//printf("\nALTPoint I : %d, %d  ;  Point II : %d, %d  ;  Point III : %d, %d\n", points[0]->x, points[0]->y, points[1]->x, points[1]->y, points[2]->x, points[2]->y);
-				circle(tempImage, *points[0], 4, Scalar(0, 0, 200), 2);
-				circle(tempImage, *points[1], 4, Scalar(0, 0, 200), 2);
-				circle(tempImage, *points[2], 4, Scalar(0, 0, 200), 2);
-				int npt[] = { 3 };
+				edges[2] = subdiv.getEdge(edges[1], subdiv.NEXT_AROUND_LEFT);
+				thirdVertIndex = subdiv.edgeOrg(edges[2], verts[2]);
 
-				//fillPoly(tempImage, points, npt, 1, Scalar(0, 0, 200), 8);
-				imshow("Display", tempImage);
-				cv::waitKey();
-			}
+				if (firstVertIndex < 4 || secondVertIndex < 4 || thirdVertIndex < 4) {
+					continue;
+				}
+				if ((firstVertIndex > secondVertIndex) && (firstVertIndex > thirdVertIndex)) {
+					continue;
+				}
 
-			//SECOND METHOD
-			//float w1 = (verts[0]->x * (verts[2]->y - verts[0]->y) + (y - verts[0]->y) * (verts[2]->x - verts[0]->x) - x * (verts[2]->y - verts[0]->y))/
-			//	((verts[1]->y - verts[0]->y) * (verts[2]->x - verts[0]->x) - (verts[1]->x - verts[0]->x) * (verts[2]->y - verts[0]->y));
+				Point2f edgeVectors[3];
+				Point2f edgeNormal[3];
+				Point2f edgeMidpoint[3];
 
-			//float w2 = (y - verts[0]->y - w1* (verts[1]->y - verts[0]->y)) / (verts[2]->y - verts[0]->y);
+				int k = 0;
+				for (int j = 0; j < 3; j++) {
+					k = j + 1;
+					if (k == 3) k = 0;
+					edgeVectors[j] = Point2f(Point2f(verts[k]->x - verts[j]->x, verts[k]->y - verts[j]->y));
 
-			//printf("%.2f ; %.2f\n", w1, w2);
-			//if ( (w1 >= 0) && (w2 >= 0) &&(w1+w2 <= 1)){
-			//	printf("\nPoint I : %.0f, %.0f  ;  Point II : %.0f, %.0f  ;  Point III : %.0f, %.0f\n", verts[0]->x, verts[0]->y, verts[1]->x, verts[1]->y, verts[2]->x, verts[2]->y);
-			//	Mat tempImage = data->image.clone();
-			//	const Point2i* points[3] = { 
-			//		new Point2i((int)verts[0]->x, (int)verts[0]->y),
-			//		new Point2i((int)verts[1]->x, (int)verts[1]->y),
-			//		new Point2i((int)verts[2]->x, (int)verts[2]->y) };
+					float edgeModulus = sqrt((edgeVectors[j].x * edgeVectors[j].x) + (edgeVectors[j].y * edgeVectors[j].y));
+					edgeNormal[j] = Point2f((edgeVectors[j].y / edgeModulus), (-edgeVectors[j].x / edgeModulus));
 
-			//	//printf("\nALTPoint I : %d, %d  ;  Point II : %d, %d  ;  Point III : %d, %d\n", points[0]->x, points[0]->y, points[1]->x, points[1]->y, points[2]->x, points[2]->y);
-			//	circle(tempImage, *points[0], 4, Scalar(0, 0, 200), 2);
-			//	circle(tempImage, *points[1], 4, Scalar(0, 0, 200), 2);
-			//	circle(tempImage, *points[2], 4, Scalar(0, 0, 200), 2);
-			//	int npt[] = { 3 };
-			//	
-			//	//fillPoly(tempImage, points, npt, 1, Scalar(0, 0, 200), 8);
-			//	imshow("Display", tempImage);
-			//	cv::waitKey();
-			//}
+					edgeMidpoint[j] = Point2f((verts[j]->x + verts[k]->x) / 2, (verts[j]->y + verts[k]->y) / 2);
+				}
 
+				//FIND TRIANGLE IN WHICH THE POINT IS
+				int counter = 0;
+				for (int j = 0; j < 3; j++) {
+					if (((edgeNormal[j].x * (x - edgeMidpoint[j].x)) + (edgeNormal[j].y * (y - edgeMidpoint[j].y))) <= 0) {
+						counter++;
+					}
+				}
+
+				//DRAW POINTS AND EDGES IF PROPER TRIANGLE IS FOUND
+				if (counter == 3) {
+					printf("\nPoint I : %.0f, %.0f  ;  Point II : %.0f, %.0f  ;  Point III : %.0f, %.0f\n", verts[0]->x, verts[0]->y, verts[1]->x, verts[1]->y, verts[2]->x, verts[2]->y);
+					Mat tempImage = data->image.clone();			
+
+					int k = 0;
+					for (int j = 0; j < 3; j++) {
+						k = j + 1;
+						if (k == 3) {
+							k = 0;
+						}
+
+						circle(tempImage, *verts[j], 5, Scalar(0, 0, 200), 4);
+						line(tempImage, *verts[j], *verts[k], Scalar(0, 0, 200), 3, 8);
+
+						Point2f* neighbourVert = new Point2f();
+						int neighbourVertIndex = subdiv.edgeOrg(subdiv.getEdge(edges[j], subdiv.NEXT_AROUND_RIGHT), neighbourVert);
+						if (((neighbourVert->x >= 20) && (neighbourVert->x < 420)) && ((neighbourVert->y >= 20) && (neighbourVert->y < 420))) {
+							circle(tempImage, *neighbourVert, 4, Scalar(200, 0, 0), 3);
+							printf("\nPointBLUE : %.0f, %.0f\n", neighbourVert->x, neighbourVert->y);
+							line(tempImage, *neighbourVert, *verts[j], Scalar(200, 0, 0), 2, 8);
+							line(tempImage, *neighbourVert, *verts[k], Scalar(200, 0, 0), 2, 8);
+						}						
+					}
+					imshow("Display", tempImage);
+					cv::waitKey();
+				}				
+			} while (true);
 			
 		}
 	}	
@@ -177,38 +170,29 @@ int main(int argc, char *argv[])
 		Point2f temp = div.getVertex(i);
 		circle(image, temp, 3, Scalar(0,0,0));
 	}
+			
+	try {
+		for (int i = 0; ; i++) {
 
-	vector<Vec4f> edgeList;
-	div.getEdgeList(edgeList);
-	int edgeNum = edgeList.size();
-	cout << edgeNum;
+			Point2f* tempOrg = new Point2f();
+			Point2f* tempDst = new Point2f();
 
-	int edgeCounter = 0;
-	//256 is a number of edges, value is experimental
-	for (int i = 0; i < 250; i++) {
-
-		Point2f* tempOrg = new Point2f();
-		Point2f* tempDst = new Point2f();
-
-		int tempOrgIndex = div.edgeOrg(i, tempOrg);
-		int tempDstIndex = div.edgeDst(i, tempDst);
-		printf("Enter: %d, %d\n", tempOrgIndex, tempDstIndex);
-		if ((tempOrgIndex < tempDstIndex) && ((tempOrgIndex > 3) && (tempDstIndex > 3))) {
-			line(image, *tempOrg, *tempDst, Scalar(0,255,0), 1);
-			printf("Drawing: %d, %d\n", tempOrgIndex, tempDstIndex);
-			//circle(image, *tempOrg, 3, Scalar(0, 0, 0));
-			//circle(image, *tempDst, 3, Scalar(0, 0, 0));
-			edgeCounter++;
-		}		
-		
+			int tempOrgIndex = div.edgeOrg(i, tempOrg);
+			int tempDstIndex = div.edgeDst(i, tempDst);
+			if ((tempOrgIndex < tempDstIndex) && ((tempOrgIndex > 3) && (tempDstIndex > 3))) {
+				line(image, *tempOrg, *tempDst, Scalar(0, 255, 0), 1);
+			}
+		}
 	}
-	cout << edgeCounter;
-
+	catch (Exception e) {
+		printf("%s", e.msg);
+	}	
 	namedWindow("Display");
 
 	if (image.data) {
 		imshow("Display", image);
 	}
+
 	UserData* userData = new UserData();
 	userData->pointNum = pointNum;
 	userData->subdiv = div;
