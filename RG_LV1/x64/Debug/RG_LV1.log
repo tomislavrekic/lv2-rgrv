@@ -1,4 +1,2 @@
-﻿  RG_LV1.cpp
-c:\users\rekca\desktop\za faks\1.dpsemestar\robotski vid\lv\lv2-rgrv\rg_lv1\rg_lv1.cpp(188): warning C4477: 'printf' : format string '%s' requires an argument of type 'char *', but variadic argument 1 has type 'cv::String'
-  RG_LV1.vcxproj -> C:\Users\Rekca\Desktop\za faks\1.DPsemestar\Robotski vid\LV\lv2-rgrv\x64\Debug\RG_LV1.exe
+﻿  RG_LV1.vcxproj -> C:\Users\Rekca\Desktop\za faks\1.DPsemestar\Robotski vid\LV\lv2-rgrv\x64\Debug\RG_LV1.exe
   RG_LV1.vcxproj -> C:\Users\Rekca\Desktop\za faks\1.DPsemestar\Robotski vid\LV\lv2-rgrv\x64\Debug\RG_LV1.pdb (Full PDB)

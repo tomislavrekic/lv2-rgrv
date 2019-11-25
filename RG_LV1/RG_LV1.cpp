@@ -118,18 +118,28 @@ void onMouse(int event, int x, int y, int flags, void *userData) {
 							k = 0;
 						}
 
-						circle(tempImage, *verts[j], 5, Scalar(0, 0, 200), 4);
-						line(tempImage, *verts[j], *verts[k], Scalar(0, 0, 200), 3, 8);
-
 						Point2f* neighbourVert = new Point2f();
 						int neighbourVertIndex = subdiv.edgeOrg(subdiv.getEdge(edges[j], subdiv.NEXT_AROUND_RIGHT), neighbourVert);
-						if (((neighbourVert->x >= 20) && (neighbourVert->x < 420)) && ((neighbourVert->y >= 20) && (neighbourVert->y < 420))) {
-							circle(tempImage, *neighbourVert, 4, Scalar(200, 0, 0), 3);
+						if (((neighbourVert->x >= 20) && (neighbourVert->x < 420)) && ((neighbourVert->y >= 20) && (neighbourVert->y < 420))) {							
 							printf("\nPointBLUE : %.0f, %.0f\n", neighbourVert->x, neighbourVert->y);
-							line(tempImage, *neighbourVert, *verts[j], Scalar(200, 0, 0), 2, 8);
-							line(tempImage, *neighbourVert, *verts[k], Scalar(200, 0, 0), 2, 8);
+							vector<Point> sides;
+							sides.push_back(Point(verts[j]->x, verts[j]->y));
+							sides.push_back(Point(verts[k]->x, verts[k]->y));
+							sides.push_back(Point(neighbourVert->x, neighbourVert->y));
+							vector<vector<Point>> poly;
+							poly.push_back(sides);
+							fillPoly(tempImage, poly, Scalar(200, 0, 0));
 						}						
 					}
+
+					vector<Point> sides;
+					sides.push_back(Point(verts[0]->x, verts[0]->y));
+					sides.push_back(Point(verts[1]->x, verts[1]->y));
+					sides.push_back(Point(verts[2]->x, verts[2]->y));
+					vector<vector<Point>> poly;
+					poly.push_back(sides);
+					fillPoly(tempImage, poly, Scalar(0, 0, 200));
+
 					imshow("Display", tempImage);
 					cv::waitKey();
 				}				
